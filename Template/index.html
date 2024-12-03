@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Generator</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1>Password Generator</h1>
+  <form id="passwordForm">
+    <label for="minLength">Minimum Length</label>
+    <input type="number" id="minLength" name="minLength" min="1" required>
+
+    <label for="maxLength">Maximum Length</label>
+    <input type="number" id="maxLength" name="maxLength" min="1" required>
+
+    <label>
+      <input type="checkbox" id="hasNumbers" checked>
+      Include Numbers
+    </label>
+    <label>
+      <input type="checkbox" id="hasSpecial" checked>
+      Include Special Characters
+    </label>
+
+    <button type="submit">Generate Password</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    document.getElementById("passwordForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const minLength = parseInt(document.getElementById("minLength").value);
+      const maxLength = parseInt(document.getElementById("maxLength").value);
+      const hasNumbers = document.getElementById("hasNumbers").checked;
+      const hasSpecial = document.getElementById("hasSpecial").checked;
+
+      if (minLength > maxLength) {
+        alert("Minimum length cannot be greater than maximum length!");
+        return;
+      }
+
+      const response = await fetch("/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          min_length: minLength,
+          max_length: maxLength,
+          numbers: hasNumbers,
+          special_characters: hasSpecial,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        document.getElementById("result").innerText = `Generated Password: ${data.password}`;
+      } else {
+        alert(data.error);
+      }
+    });
+  </script>
+</body>
+</html>
