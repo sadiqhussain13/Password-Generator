@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 import random
 import string
 
 app = Flask(__name__, template_folder='Template')
 
 def generate_password(min_length, max_length, numbers=True, special_characters=True):
+    if max_length < min_length:
+        raise ValueError("Maximum length cannot be less than minimum length.")
+
     letters = string.ascii_letters
     digits = string.digits
     special = string.punctuation
@@ -16,18 +19,29 @@ def generate_password(min_length, max_length, numbers=True, special_characters=T
         characters += special
 
     pwd = ""
+    meets_criteria = False
     has_number = False
     has_special = False
 
-    while len(pwd) < min_length or (len(pwd) < max_length and (not has_number or not has_special)):
-        char = random.choice(characters)
-        pwd += char
-        if char in digits:
+    while not meets_criteria or len(pwd) < min_length:
+        if len(pwd) >= max_length:
+            break
+
+        new_char = random.choice(characters)
+        pwd += new_char
+
+        if new_char in digits:
             has_number = True
-        if char in special:
+        elif new_char in special:
             has_special = True
 
-    return pwd[:max_length] if len(pwd) > max_length else pwd
+        meets_criteria = True
+        if numbers:
+            meets_criteria = has_number
+        if special_characters:
+            meets_criteria = meets_criteria and has_special
+
+    return pwd
 
 @app.route('/')
 def home():
@@ -35,17 +49,28 @@ def home():
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    data = request.json
-    min_length = data.get('min_length')
-    max_length = data.get('max_length')
-    numbers = data.get('numbers', True)
-    special_characters = data.get('special_characters', True)
+    try:
+        min_length = int(request.form.get('min_length'))
+        max_length = int(request.form.get('max_length'))
+        include_numbers = request.form.get('include_numbers') == 'on'
+        include_specials = request.form.get('include_specials') == 'on'
 
-    if min_length > max_length:
-        return jsonify({'error': 'Minimum length cannot be greater than maximum length!'}), 400
+        # Check if max_length is less than min_length
+        if max_length < min_length:
+            return render_template(
+                'index.html',
+                error="Max length cannot be less than Min length."
+            )
 
-    password = generate_password(min_length, max_length, numbers, special_characters)
-    return jsonify({'password': password})
+        # Generate password if inputs are valid
+        password = generate_password(min_length, max_length, include_numbers, include_specials)
+        return render_template('index.html', password=password)
+
+    except ValueError:
+        return render_template(
+            'index.html',
+            error="Please enter valid numbers for min and max lengths."
+        )
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0',debug=True, port=8080)

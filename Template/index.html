@@ -4,65 +4,54 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Password Generator</title>
-  <link rel="stylesheet" href="/static/style.css">
+  
+  <!-- Bootstrap CSS -->
+  <link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+/>
 </head>
 <body>
-  <h1>Password Generator</h1>
-  <form id="passwordForm">
-    <label for="minLength">Minimum Length</label>
-    <input type="number" id="minLength" name="minLength" min="1" required>
+  <div class="container mt-5">
+      <h1 class="text-center mb-4">Password Generator</h1>
 
-    <label for="maxLength">Maximum Length</label>
-    <input type="number" id="maxLength" name="maxLength" min="1" required>
+      <form action="/generate" method="POST" class="card p-4 shadow-sm">
+          <div class="mb-3">
+              <label for="min_length" class="form-label">Minimum Length:</label>
+              <input type="number" class="form-control" id="min_length" name="min_length" required>
+          </div>
+          <div class="mb-3">
+              <label for="max_length" class="form-label">Maximum Length:</label>
+              <input type="number" class="form-control" id="max_length" name="max_length" required>
+          </div>
+          <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="include_numbers" name="include_numbers" checked>
+              <label class="form-check-label" for="include_numbers">Include Numbers</label>
+          </div>
+          <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="include_specials" name="include_specials" checked>
+              <label class="form-check-label" for="include_specials">Include Special Characters</label>
+          </div>
+          <div class="d-flex justify-content-center">
+              <button type="submit" class="btn btn-primary">Generate Password</button>
+          </div>
+      </form>
 
-    <label>
-      <input type="checkbox" id="hasNumbers" checked>
-      Include Numbers
-    </label>
-    <label>
-      <input type="checkbox" id="hasSpecial" checked>
-      Include Special Characters
-    </label>
+      {% if error %}
+          <div class="alert alert-danger mt-4 text-center" role="alert">
+              {{ error }}
+          </div>
+      {% endif %}
 
-    <button type="submit">Generate Password</button>
-  </form>
-
-  <div id="result"></div>
-
-  <script>
-    document.getElementById("passwordForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const minLength = parseInt(document.getElementById("minLength").value);
-      const maxLength = parseInt(document.getElementById("maxLength").value);
-      const hasNumbers = document.getElementById("hasNumbers").checked;
-      const hasSpecial = document.getElementById("hasSpecial").checked;
-
-      if (minLength > maxLength) {
-        alert("Minimum length cannot be greater than maximum length!");
-        return;
-      }
-
-      const response = await fetch("/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          min_length: minLength,
-          max_length: maxLength,
-          numbers: hasNumbers,
-          special_characters: hasSpecial,
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        document.getElementById("result").innerText = `Generated Password: ${data.password}`;
-      } else {
-        alert(data.error);
-      }
-    });
-  </script>
+      {% if password %}
+          <div class="alert alert-success mt-4 text-center" role="alert">
+              Generated Password: <strong>{{ password }}</strong>
+          </div>
+      {% endif %}
+  </div>
+  <!-- Bootstrap JS -->
+  <script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+></script>
 </body>
 </html>
